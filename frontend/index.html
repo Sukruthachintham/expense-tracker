@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Expense Tracker</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+    body {
+      background-color: #e3f2fd;
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 30px 20px;
+      color: #2c3e50;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1000px;
+      width: 100%;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      padding: 30px 40px;
+    }
+
+    h1 {
+      color: #2e7d32;
+      text-align: center;
+      margin-bottom: 30px;
+      font-weight: 700;
+      letter-spacing: 1.1px;
+      user-select: none;
+    }
+
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 30px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    form input[type="number"],
+    form input[type="text"],
+    form input[type="date"] {
+      flex: 1;
+      padding: 10px;
+      border: 1.8px solid #a3d39c;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+
+    form input:focus {
+      border-color: #2e7d32;
+      outline: none;
+      box-shadow: 0 0 7px #81c784aa;
+    }
+
+    form button {
+      flex: 1 1 100%;
+      background-color: #2e7d32;
+      color: white;
+      border: none;
+      padding: 12px 0;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-top: 10px;
+    }
+
+    form button:hover {
+      background-color: #245925;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 16px;
+    }
+
+    thead th {
+      color: #2e7d32;
+      font-weight: 700;
+      padding: 14px 20px;
+      text-align: left;
+      border-bottom: 2px solid #a3d39c;
+    }
+
+    tbody tr {
+      background: #eaf5ea;
+      border-radius: 12px;
+      box-shadow: 0 3px 6px #cde3c7;
+      margin-bottom: 10px;
+      transition: background-color 0.3s ease;
+    }
+
+    tbody tr:hover {
+      background: #d0e8d0;
+    }
+
+    tbody td {
+      padding: 14px 20px;
+    }
+
+    .edit-btn, .delete-btn {
+      padding: 7px 15px;
+      font-size: 14px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      margin-right: 5px;
+    }
+
+    .edit-btn {
+      background-color: #1565c0;
+      color: white;
+    }
+
+    .edit-btn:hover {
+      background-color: #0d47a1;
+    }
+
+    .delete-btn {
+      background-color: #c62828;
+      color: white;
+    }
+
+    .delete-btn:hover {
+      background-color: #7b1a1a;
+    }
+
+    tfoot tr {
+      font-weight: bold;
+      background: #d0e8d0;
+    }
+
+    tfoot td {
+      padding: 14px 20px;
+      text-align: right;
+      border-top: 2px solid #a3d39c;
+    }
+
+    @media (max-width: 768px) {
+      form {
+        flex-direction: column;
+      }
+      form input, form button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>💰 Expense Tracker</h1>
+
+    <form id="expense-form" autocomplete="off">
+      <input type="hidden" id="expense-id" />
+      <input type="number" id="amount" placeholder="Amount" required step="0.01" />
+      <input type="text" id="category" placeholder="Category" required />
+      <input type="date" id="date" required />
+      <input type="text" id="note" placeholder="Note (optional)" />
+      <button type="submit" id="submit-btn">Add Expense</button>
+    </form>
+
+    <table id="expenses-table">
+      <thead>
+        <tr>
+          <th>Amount</th>
+          <th>Category</th>
+          <th>Date</th>
+          <th>Note</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Expense entries go here -->
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="5">
+            Total Expense: ₹<span id="total-expense">0.00</span>
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <script>
+    const API_URL = 'http://127.0.0.1:5000';
+
+    const form = document.getElementById('expense-form');
+    const amountInput = document.getElementById('amount');
+    const categoryInput = document.getElementById('category');
+    const dateInput = document.getElementById('date');
+    const noteInput = document.getElementById('note');
+    const expenseIdInput = document.getElementById('expense-id');
+    const submitBtn = document.getElementById('submit-btn');
+    const expensesTableBody = document.querySelector('#expenses-table tbody');
+
+    function fetchExpenses() {
+      fetch(`${API_URL}/expenses`)
+        .then(res => res.json())
+        .then(data => {
+          expensesTableBody.innerHTML = '';
+
+          let total = 0;
+          data.forEach(expense => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${expense.amount.toFixed(2)}</td>
+              <td>${expense.category}</td>
+              <td>${expense.date}</td>
+              <td>${expense.note || ''}</td>
+              <td>
+                <button class="edit-btn" onclick="editExpense(${expense.id})">Edit</button>
+                <button class="delete-btn" onclick="deleteExpense(${expense.id})">Delete</button>
+              </td>
+            `;
+            expensesTableBody.appendChild(tr);
+            total += expense.amount;
+          });
+
+          document.getElementById('total-expense').textContent = total.toFixed(2);
+        })
+        .catch(err => console.error('Error fetching expenses:', err));
+    }
+
+    function addExpense(expense) {
+      return fetch(`${API_URL}/add-expense`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(expense)
+      }).then(res => res.json());
+    }
+
+    function updateExpense(id, expense) {
+      return fetch(`${API_URL}/update-expense/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(expense)
+      }).then(res => res.json());
+    }
+
+    function deleteExpense(id) {
+      if (!confirm('Are you sure you want to delete this expense?')) return;
+      fetch(`${API_URL}/delete-expense/${id}`, { method: 'DELETE' })
+        .then(() => fetchExpenses());
+    }
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+
+      const expense = {
+        amount: parseFloat(amountInput.value),
+        category: categoryInput.value,
+        date: dateInput.value,
+        note: noteInput.value
+      };
+
+      const id = expenseIdInput.value;
+
+      if (!expense.amount || !expense.category || !expense.date) {
+        alert('Please fill all required fields.');
+        return;
+      }
+
+      if (id) {
+        updateExpense(id, expense).then(() => {
+          submitBtn.textContent = 'Add Expense';
+          expenseIdInput.value = '';
+          form.reset();
+          fetchExpenses();
+        });
+      } else {
+        addExpense(expense).then(() => {
+          form.reset();
+          fetchExpenses();
+        });
+      }
+    });
+
+    function editExpense(id) {
+      fetch(`${API_URL}/expenses`)
+        .then(res => res.json())
+        .then(data => {
+          const expense = data.find(e => e.id === id);
+          if (expense) {
+            expenseIdInput.value = expense.id;
+            amountInput.value = expense.amount;
+            categoryInput.value = expense.category;
+            dateInput.value = expense.date;
+            noteInput.value = expense.note || '';
+            submitBtn.textContent = 'Update Expense';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        })
+        .catch(err => console.error('Error editing expense:', err));
+    }
+
+    // Initial load
+    fetchExpenses();
+  </script>
+</body>
+</html>
