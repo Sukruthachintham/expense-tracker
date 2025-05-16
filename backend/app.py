@@ -10,9 +10,7 @@ def home():
 expenses = [
     
 ]
-@app.route('/')
-def home():
-    return "Expense Tracker API is running!"
+
 
 
 
