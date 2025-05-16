@@ -8,6 +8,10 @@ CORS(app)  # Enable CORS so your frontend JS can call the API
 expenses = [
     
 ]
+@app.route('/')
+def home():
+    return "Expense Tracker API is running!"
+
 
 @app.route('/expenses', methods=['GET'])
 def get_expenses():
