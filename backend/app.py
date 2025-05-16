@@ -3,7 +3,9 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS so your frontend JS can call the API
-
+@app.route('/')
+def home():
+    return "Expense Tracker API is running!"
 # In-memory expenses list
 expenses = [
     
@@ -11,6 +13,7 @@ expenses = [
 @app.route('/')
 def home():
     return "Expense Tracker API is running!"
+
 
 
 @app.route('/expenses', methods=['GET'])
