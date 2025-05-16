@@ -71,5 +71,9 @@ def delete_expense(expense_id):
     expenses = [e for e in expenses if e['id'] != expense_id]
     return jsonify({"message": "Deleted"}), 200
 
+import os
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # default to 5000 for local testing
+    app.run(host='0.0.0.0', port=port)
+
